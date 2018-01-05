@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 '''
 Train PredNet on KITTI sequences. (Geiger et al. 2013, http://www.cvlibs.net/datasets/kitti/)
 '''
@@ -14,6 +15,7 @@ from keras.layers import LSTM
 from keras.layers import TimeDistributed
 from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from keras.optimizers import Adam
+from keras.utils import plot_model
 
 from prednet import PredNet
 from data_utils import SequenceGenerator
@@ -63,6 +65,9 @@ final_errors = Dense(1, weights=[time_loss_weights, np.zeros(1)], trainable=Fals
 model = Model(inputs=inputs, outputs=final_errors)
 model.compile(loss='mean_absolute_error', optimizer='adam')
 
+
+plot_model(model, to_file='model.png')
+
 train_generator = SequenceGenerator(train_file, train_sources, nt, batch_size=batch_size, shuffle=True)
 val_generator = SequenceGenerator(val_file, val_sources, nt, batch_size=batch_size, N_seq=N_seq_val)
 
@@ -73,7 +78,7 @@ if save_model:
     callbacks.append(ModelCheckpoint(filepath=weights_file, monitor='val_loss', save_best_only=True))
 
 history = model.fit_generator(train_generator, samples_per_epoch / batch_size, nb_epoch, callbacks=callbacks,
-                validation_data=val_generator, validation_steps=N_seq_val / batch_size)
+                validation_data=val_generator, validation_steps=N_seq_val / batch_size, verbose=1)
 
 if save_model:
     json_string = model.to_json()
